@@ -1,7 +1,6 @@
 import express, { json, urlencoded } from 'express';
 import cors from 'cors';
 import mainRouter from './Routers/index.js';
-import config from './config.json' with { type: "json" };
 import Database from './db.js';
 
 // Start MongoDB
@@ -20,7 +19,7 @@ process.on('exit', async (code) => {
 
 // Start Express
 const server = express()
-const port = config.PORT || 3333
+const port = 3333
 
 // Middlewares
 server.use(cors())
