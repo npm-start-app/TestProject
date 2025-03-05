@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-import config from './config.json' with { type: "json" };
+import config from './config.json' assert { type: "json" };
 
 class Database {
     static client = null;
