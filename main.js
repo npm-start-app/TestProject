@@ -1,7 +1,7 @@
 import express, { json, urlencoded } from 'express';
 import cors from 'cors';
 import mainRouter from './Routers/index.js';
-import config from './config.json' assert { type: "json" };
+import config from './config.json' with { type: "json" };
 import Database from './db.js';
 
 // Start MongoDB
