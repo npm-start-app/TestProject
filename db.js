@@ -1,5 +1,11 @@
 import { MongoClient } from 'mongodb';
-import config from './config.json' assert { type: "json" };
+// import config from './config.json' with { type: "json" };
+import { readFile } from 'fs/promises';
+const config = JSON.parse(
+    await readFile(
+      new URL('./config.json', import.meta.url)
+    )
+  );
 
 class Database {
     static client = null;
