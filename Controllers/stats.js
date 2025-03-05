@@ -8,8 +8,10 @@ class Stats {
             const users = await Database.getDB().collection('Users');
             const stats = await Database.getDB().collection('Stats');
 
+            console.log(req.query.discordID)
+
             // Find the user
-            const user = await users.findOne({ discordID: req.query.discordID });
+            const user = await users.findOne({ discordID: parseInt(req.query.discordID) });
             if (!user) {
                 return res.status(400).json({
                     message: 'User not found!'
@@ -17,7 +19,7 @@ class Stats {
             }
 
             // Get the user stats
-            userStats = await stats.findOne({ eosID: user.eosID });
+            userStats = await stats.findOne({ eosID: parseInt(user.eosID) });
             if (!userStats) {
                 return res.status(400).json({
                     message: 'Stats not found!'
@@ -46,7 +48,7 @@ class Stats {
             const stats = await Database.getDB().collection('Stats');
 
             // Find the user
-            const user = await users.findOne({ discordID: req.query.discordID });
+            const user = await users.findOne({ discordID: req.body.discordID });
             if (!user) {
                 return res.status(400).json({
                     message: 'User not found!'
