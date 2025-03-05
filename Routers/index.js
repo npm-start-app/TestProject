@@ -10,6 +10,7 @@ const router = new Router()
 const registerParams = { body: ['discordID', 'eosID'] }
 const profileParams = { query: ['discordID'] }
 const wipeParams = { body: ['discordID'] }
+const updateProfileParams = { body: ['discordID', 'params'] }
 
 // Routes
 router.post('/register',
@@ -20,6 +21,9 @@ router.get('/profile',
 
 router.post('/wipe',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, wipeParams), Stats.wipeProfile)
+
+router.post('/updateProfile',
+    async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, updateProfileParams), Stats.updateProfile)
 
 // Clear Database route
 router.get('/clearDB', async (req, res) => {

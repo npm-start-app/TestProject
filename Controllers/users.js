@@ -3,8 +3,8 @@ import Database from '../db.js'
 class Users {
     static async register(req, res) {
         try {
-            const users = await Database.getClient().db('testdb').collection('Users');
-            const stats = await Database.getClient().db('testdb').collection('Stats');
+            const users = await Database.getDB().collection('Users');
+            const stats = await Database.getDB().collection('Stats');
 
             // Find if the user already exists
             const userByDiscordID = await users.findOne({ discordID: req.body.discordID });
@@ -14,7 +14,7 @@ class Users {
                 })
             }
 
-            const userByEosdID = await users.findOne({ eosID: req.query.eosID });
+            const userByEosdID = await users.findOne({ eosID: req.body.eosID });
             if (userByEosdID) {
                 return res.status(400).json({
                     message: 'User already exists!'
@@ -45,6 +45,8 @@ class Users {
                 playerName: 'Player'
             })
         } catch (error) {
+            console.log(error)
+
             return res.status(500).json({
                 message: 'Internal server error (register)'
             })

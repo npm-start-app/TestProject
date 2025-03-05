@@ -5,8 +5,8 @@ class Stats {
         let userStats = {};
 
         try {
-            const users = await Database.getClient().db('testdb').collection('Users');
-            const stats = await Database.getClient().db('testdb').collection('Stats');
+            const users = await Database.getDB().collection('Users');
+            const stats = await Database.getDB().collection('Stats');
 
             // Find the user
             const user = await users.findOne({ discordID: req.query.discordID });
@@ -26,6 +26,8 @@ class Stats {
 
             delete userStats._id;
         } catch (error) {
+            console.log(error)
+
             return res.status(500).json({
                 message: 'Internal server error (getProfile)'
             })
@@ -36,10 +38,57 @@ class Stats {
         })
     }
 
+    static async updateProfile(req, res) {
+        let updatedParams = [];
+
+        try {
+            const users = await Database.getDB().collection('Users');
+            const stats = await Database.getDB().collection('Stats');
+
+            // Find the user
+            const user = await users.findOne({ discordID: req.query.discordID });
+            if (!user) {
+                return res.status(400).json({
+                    message: 'User not found!'
+                })
+            }
+
+            // Find the user stats
+            const userStats = await stats.findOne({ eosID: user.eosID });
+            if (!userStats) {
+                return res.status(400).json({
+                    message: 'Stats not found!'
+                })
+            }
+
+            // Update the user stats
+            // req.body.params = JSON.parse(req.body.params);
+            for (const key in req.body.params) {
+                if (userStats.hasOwnProperty(key)) {
+                    const result = await stats.updateOne({ eosID: user.eosID }, { $set: { [key]: req.body.params[key] } });
+                    if (result.matchedCount !== 0) {
+                        updatedParams.push(key);
+                    }
+                }
+            }
+        } catch (error) {
+            console.log(error)
+
+            return res.status(500).json({
+                message: 'Internal server error (updateProfile)'
+            })
+        }
+
+        return res.status(200).json({
+            message: 'Profile updated!',
+            updatedParams
+        })
+    }
+
     static async wipeProfile(req, res) {
         try {
-            const users = await Database.getClient().db('testdb').collection('Users');
-            const stats = await Database.getClient().db('testdb').collection('Stats');
+            const users = await Database.getDB().collection('Users');
+            const stats = await Database.getDB().collection('Stats');
 
             // Find the user
             const user = await users.findOne({ discordID: req.body.discordID });
@@ -56,6 +105,8 @@ class Stats {
                 })
             }
         } catch (error) {
+            console.log(error)
+
             return res.status(500).json({
                 message: 'Internal server error (wipeProfile)'
             })
