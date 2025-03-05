@@ -19,6 +19,8 @@ router.post('/register',
 router.get('/profile',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, profileParams), Stats.getProfile)
 
+router.get('/users', Users.getUsers)
+
 router.post('/wipe',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, wipeParams), Stats.wipeProfile)
 

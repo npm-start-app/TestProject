@@ -1,5 +1,7 @@
 import Database from '../db.js'
 
+const isNumeric = (string) => {return /^\d+$/.test(string);}
+
 class Stats {
     static async getProfile(req, res) {
         let userStats = {};
@@ -8,7 +10,12 @@ class Stats {
             const users = await Database.getDB().collection('Users');
             const stats = await Database.getDB().collection('Stats');
 
-            console.log(req.query.discordID)
+            // Check if the discordID and eosID are numbers
+            if (!isNumeric(req.query.discordID)) {
+                return res.status(400).json({
+                    message: 'Invalid discordID or eosID!'
+                })
+            }
 
             // Find the user
             const user = await users.findOne({ discordID: parseInt(req.query.discordID) });
@@ -19,7 +26,7 @@ class Stats {
             }
 
             // Get the user stats
-            userStats = await stats.findOne({ eosID: parseInt(user.eosID) });
+            userStats = await stats.findOne({ eosID: user.eosID });
             if (!userStats) {
                 return res.status(400).json({
                     message: 'Stats not found!'
@@ -47,8 +54,15 @@ class Stats {
             const users = await Database.getDB().collection('Users');
             const stats = await Database.getDB().collection('Stats');
 
+            // Check if the discordID and eosID are numbers
+            if (!isNumeric(req.body.discordID)) {
+                return res.status(400).json({
+                    message: 'Invalid discordID or eosID!'
+                })
+            }
+
             // Find the user
-            const user = await users.findOne({ discordID: req.body.discordID });
+            const user = await users.findOne({ discordID: parseInt(req.body.discordID) });
             if (!user) {
                 return res.status(400).json({
                     message: 'User not found!'
@@ -92,15 +106,22 @@ class Stats {
             const users = await Database.getDB().collection('Users');
             const stats = await Database.getDB().collection('Stats');
 
+            // Check if the discordID and eosID are numbers
+            if (!isNumeric(req.body.discordID)) {
+                return res.status(400).json({
+                    message: 'Invalid discordID or eosID!'
+                })
+            }
+
             // Find the user
-            const user = await users.findOne({ discordID: req.body.discordID });
+            const user = await users.findOne({ discordID: parseInt(req.body.discordID) });
             if (!user) {
                 return res.status(400).json({
                     message: 'User not found!'
                 })
             }
 
-            const result = await stats.updateOne({ eosID: user.eosID }, { $set: { playerKills: 0, playerDeaths: 0, playerTeamKills: 0, playerVehicleKills: 0, playerWounds: 0, playerWoundeds: 0, playerRevivePoints: 0, playerHealScore: 0, playerTeamWorkScore: 0, playerObjectiveScore: 0, playerCombatScore: 0, playerLevel: 1, playerName: 'Player' } });
+            const result = await stats.updateOne({ eosID: user.eosID }, { $set: { playerKills: 0, playerDeaths: 0, playerTeamKills: 0, playerVehicleKills: 0, playerWounds: 0, playerWoundeds: 0, playerRevivePoints: 0, playerHealScore: 0, playerTeamWorkScore: 0, playerObjectiveScore: 0, playerCombatScore: 0, playerLevel: 1, playerName: 'Player', playerExperience: 0, playerNeededExperience: 100, playerWins: 0, playerDefeats: 0, playerDraws: 0, playerMatches: 0 } });
             if (result.matchedCount === 0) {
                 return res.status(400).json({
                     message: 'Stats not found!'
