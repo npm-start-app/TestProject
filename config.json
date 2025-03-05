@@ -1,0 +1,7 @@
+{
+    "PORT": 1111,
+    "DB": {
+        "mongo_URI": "mongodb+srv://ad:1234@testdb.e8glv.mongodb.net/",
+        "dbName": "testdb"
+    }
+}
