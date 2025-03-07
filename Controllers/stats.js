@@ -121,7 +121,7 @@ class Stats {
                 })
             }
 
-            const result = await stats.updateOne({ eosID: user.eosID }, { $set: { playerKills: 0, playerDeaths: 0, playerTeamKills: 0, playerVehicleKills: 0, playerWounds: 0, playerWoundeds: 0, playerRevivePoints: 0, playerHealScore: 0, playerTeamWorkScore: 0, playerObjectiveScore: 0, playerCombatScore: 0, playerLevel: 1, playerName: 'Player', playerExperience: 0, playerNeededExperience: 100, playerWins: 0, playerDefeats: 0, playerDraws: 0, playerMatches: 0 } });
+            const result = await stats.updateOne({ eosID: user.eosID }, { $set: { playerKills: 0, playerDeaths: 0, playerTeamKills: 0, playerVehicleKills: 0, playerWounds: 0, playerWoundeds: 0, playerRevivePoints: 0, playerHealScore: 0, playerTeamWorkScore: 0, playerObjectiveScore: 0, playerCombatScore: 0, playerLevel: 1, playerName: null, playerExperience: 0, playerNeededExperience: 100, playerWins: 0, playerDefeats: 0, playerMatches: 0 } });
             if (result.matchedCount === 0) {
                 return res.status(400).json({
                     message: 'Stats not found!'
