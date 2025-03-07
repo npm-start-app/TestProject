@@ -1,0 +1,40 @@
+{
+    "match_result": {
+        "teams": {
+            "1": {
+                "Squads": {
+                    "1": {
+                        "Players": {
+                            "0002372f847f44a78914329476242117": {
+                                "Data": {
+                                    "EosID": "0002372f847f44a78914329476242117",
+                                    "UserName": "Serega"
+                                },
+                                "Score": {
+                                    "CombatScore": 500,
+                                    "Deaths": 0,
+                                    "HealScore": 0,
+                                    "Kills": 0,
+                                    "ObjectiveScore": 100,
+                                    "RevivePoints": 0,
+                                    "TeamKills": 0,
+                                    "TeamWorkScore": 15,
+                                    "VehicleKills": 0,
+                                    "Woundeds": 0,
+                                    "Wounds": 0
+                                }
+                            }
+                        },
+                        "Score": {
+                            "CombatScore": 0,
+                            "ObjectiveScore": 0,
+                            "Score": 0,
+                            "TeamWorkScore": 0
+                        }
+                    }
+                }
+            },
+            "2": {}
+        }
+    }
+}

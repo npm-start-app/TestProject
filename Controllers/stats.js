@@ -1,6 +1,6 @@
 import Database from '../db.js'
 
-const isNumeric = (string) => {return /^\d+$/.test(string);}
+const isNumeric = (string) => { return /^\d+$/.test(string); }
 
 class Stats {
     static async getProfile(req, res) {
@@ -78,7 +78,6 @@ class Stats {
             }
 
             // Update the user stats
-            // req.body.params = JSON.parse(req.body.params);
             for (const key in req.body.params) {
                 if (userStats.hasOwnProperty(key)) {
                     const result = await stats.updateOne({ eosID: user.eosID }, { $set: { [key]: req.body.params[key] } });
@@ -137,6 +136,67 @@ class Stats {
 
         return res.status(200).json({
             message: 'Profile wiped!'
+        })
+    }
+
+    static async end_game(req, res) {
+        let updatedProfiles = 0;
+
+        try {
+            const match_result = req.body['match_result'];
+
+            const stats = await Database.getDB().collection('Stats');
+
+            for (const team in match_result['teams']) {
+                const teams = match_result['teams']
+
+                for (const squad in teams[team]['Squads']) {
+                    const squads = teams[team]['Squads']
+
+                    for (const player in squads[squad]['Players']) {
+                        const players = squads[squad]['Players']
+
+                        const userStats = await stats.findOne({ eosID: player });
+                        if (!userStats) {
+                            continue;
+                        }
+
+                        const getLevel = (e) => { return Math.ceil((1 + Math.sqrt(1 + (4*e)/100 - 4)) / 2) }
+                        const getNeededExperience = (level) => { return 100 * level * level - 100 * level + 100 }
+
+                        const result = await stats.updateOne({ eosID: player }, { $set: {
+                            playerKills: userStats.playerKills + players[player]['Score']['Kills'],
+                            playerDeaths: userStats.playerDeaths + players[player]['Score']['Deaths'],
+                            playerTeamKills: userStats.playerTeamKills + players[player]['Score']['TeamKills'],
+                            playerVehicleKills: userStats.playerVehicleKills + players[player]['Score']['VehicleKills'],
+                            playerWounds: userStats.playerWounds + players[player]['Score']['Wounds'],
+                            playerWoundeds: userStats.playerWoundeds + players[player]['Score']['Woundeds'],
+                            playerRevivePoints: userStats.playerRevivePoints + players[player]['Score']['RevivePoints'],
+                            playerHealScore: userStats.playerHealScore + players[player]['Score']['HealScore'],
+                            playerTeamWorkScore: userStats.playerTeamWorkScore + players[player]['Score']['TeamWorkScore'],
+                            playerObjectiveScore: userStats.playerObjectiveScore + players[player]['Score']['ObjectiveScore'],
+                            playerCombatScore: userStats.playerCombatScore + players[player]['Score']['CombatScore'],
+                            playerLevel: getLevel((userStats.playerExperience + players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3),
+                            playerName: players[player]['Data']['UserName'],
+                            playerExperience: userStats.playerExperience + players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore'],
+                            playerNeededExperience: getNeededExperience(getLevel((userStats.playerExperience + players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3))
+                        } })
+
+                        updatedProfiles++
+                    }
+                }
+            }
+        } catch (error) {
+            console.log(error)
+
+            return res.status(500).json({
+                message: 'Internal server error (end_game)'
+            })
+        }
+
+        return res.status(200).json({
+            message: 'Game ended!',
+            updatedProfiles
         })
     }
 }

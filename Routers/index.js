@@ -11,6 +11,7 @@ const registerParams = { body: ['discordID', 'eosID'] }
 const profileParams = { query: ['discordID'] }
 const wipeParams = { body: ['discordID'] }
 const updateProfileParams = { body: ['discordID', 'params'] }
+const endGameParams = { body: ['match_result'] }
 
 // Routes
 router.post('/register',
@@ -26,6 +27,9 @@ router.post('/wipe',
 
 router.post('/updateProfile',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, updateProfileParams), Stats.updateProfile)
+
+router.post('/end_game',
+    async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, endGameParams), Stats.end_game)
 
 // Clear Database route
 router.get('/clearDB', async (req, res) => {
