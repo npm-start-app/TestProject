@@ -176,10 +176,10 @@ class Stats {
                             playerTeamWorkScore: userStats.playerTeamWorkScore + players[player]['Score']['TeamWorkScore'],
                             playerObjectiveScore: userStats.playerObjectiveScore + players[player]['Score']['ObjectiveScore'],
                             playerCombatScore: userStats.playerCombatScore + players[player]['Score']['CombatScore'],
-                            playerLevel: getLevel((userStats.playerExperience + players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3),
+                            playerLevel: getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3),
                             playerName: players[player]['Data']['UserName'],
-                            playerExperience: userStats.playerExperience + players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore'],
-                            playerNeededExperience: getNeededExperience(getLevel((userStats.playerExperience + players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3))
+                            playerExperience: userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3,
+                            playerNeededExperience: getNeededExperience(getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3))
                         } })
 
                         updatedProfiles++
