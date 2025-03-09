@@ -1,7 +1,7 @@
 import Database from '../db.js'
 
-const isNumeric = (string) => {return /^\d+$/.test(string);}
-    
+const isNumeric = (string) => { return /^\d+$/.test(string); }
+
 class Users {
     static async register(req, res) {
         try {
@@ -73,14 +73,14 @@ class Users {
 
     static async getUsers(req, res) {
         let records = [];
-        
+
         const limit = 20;
         const page = parseInt(req.query.page) || 0;
-        
+
         try {
             const users = await Database.getDB().collection('Users');
 
-            records = await users.find().skip(limit*page).limit(limit).toArray();
+            records = await users.find().skip(limit * page).limit(limit).toArray();
         } catch (error) {
             console.log(error)
 
@@ -91,6 +91,59 @@ class Users {
 
         return res.status(200).json({
             records
+        })
+    }
+
+    static async deleteUser(req, res) {
+        try {
+            const users = await Database.getDB().collection('Users');
+            const stats = await Database.getDB().collection('Stats');
+
+            if (!req.body.eosID) {
+                if (!req.body.discordID) {
+                    return res.status(400).json({
+                        message: 'Invalid parameters!'
+                    })
+                } else {
+                    if (!isNumeric(req.body.discordID)) {
+                        return res.status(400).json({
+                            message: 'Invalid discordID or eosID!'
+                        })
+                    }
+
+                    const result = await users.deleteOne({ discordID: parseInt(req.body.discordID) });
+                    if (result.deletedCount === 0) {
+                        return res.status(400).json({
+                            message: 'User not found!'
+                        })
+                    }
+
+                    const result_0 = await stats.deleteOne({ eosID: result.eosID });
+                    if (result_0.deletedCount === 0) {
+                        await users.deleteOne({ discordID: parseInt(req.body.discordID) })
+                    }
+                }
+            } else {
+                const result = await users.deleteOne({ eosID: req.body.eosID });
+                if (result.deletedCount === 0) {
+                    return res.status(400).json({
+                        message: 'User not found!'
+                    })
+                }
+
+                const result_0 = await stats.deleteOne({ eosID: req.body.eosID });
+                if (result_0.deletedCount === 0) {
+                    await users.deleteOne({ eosID: req.body.eosID })
+                }
+            }
+        } catch (error) {
+            return res.status(500).json({
+                message: 'Internal server error (deleteUser)'
+            })
+        }
+
+        return res.status(200).json({
+            message: 'User deleted!'
         })
     }
 }

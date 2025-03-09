@@ -1,5 +1,12 @@
 import Database from '../db.js'
 
+import { readFile } from 'fs/promises';
+const config = JSON.parse(
+    await readFile(
+        new URL('../config.json', import.meta.url)
+    )
+);
+
 const isNumeric = (string) => { return /^\d+$/.test(string); }
 
 class Stats {
@@ -100,42 +107,67 @@ class Stats {
         })
     }
 
-    static async wipeProfile(req, res) {
+    static async wipe(req, res) {
+        let wipedProfiles = 0;
+
         try {
-            const users = await Database.getDB().collection('Users');
+            if (req.body.key !== config.ACCESS_KEY) {
+                return res.status(400).json({
+                    message: 'Invalid key!'
+                })
+            }
+
             const stats = await Database.getDB().collection('Stats');
 
-            // Check if the discordID and eosID are numbers
-            if (!isNumeric(req.body.discordID)) {
-                return res.status(400).json({
-                    message: 'Invalid discordID or eosID!'
-                })
-            }
+            let page = 0;
+            let limit = 20;
 
-            // Find the user
-            const user = await users.findOne({ discordID: parseInt(req.body.discordID) });
-            if (!user) {
-                return res.status(400).json({
-                    message: 'User not found!'
-                })
-            }
+            while (true) {
+                const result = await stats.find().skip(limit * page).limit(limit).toArray();
 
-            const result = await stats.updateOne({ eosID: user.eosID }, { $set: { playerKills: 0, playerDeaths: 0, playerTeamKills: 0, playerVehicleKills: 0, playerWounds: 0, playerWoundeds: 0, playerRevivePoints: 0, playerHealScore: 0, playerTeamWorkScore: 0, playerObjectiveScore: 0, playerCombatScore: 0, playerLevel: 1, playerName: null, playerExperience: 0, playerNeededExperience: 100, playerWins: 0, playerDefeats: 0, playerMatches: 0 } });
-            if (result.matchedCount === 0) {
-                return res.status(400).json({
-                    message: 'Stats not found!'
-                })
+                if (result.length === 0) {
+                    break;
+                }
+
+                for (const record of result) {
+                    await stats.updateOne({ eosID: record.eosID }, {
+                        $set: {
+                            playerKills: 0,
+                            playerDeaths: 0,
+                            playerTeamKills: 0,
+                            playerVehicleKills: 0,
+                            playerWounds: 0,
+                            playerWoundeds: 0,
+                            playerRevivePoints: 0,
+                            playerHealScore: 0,
+                            playerTeamWorkScore: 0,
+                            playerObjectiveScore: 0,
+                            playerCombatScore: 0,
+                            playerLevel: 1,
+                            playerExperience: 0,
+                            playerNeededExperience: 100,
+                            playerWins: 0,
+                            playerDefeats: 0,
+                            playerMatches: 0
+                        }
+                    })
+
+                    wipedProfiles++
+                }
+
+                page++
             }
         } catch (error) {
             console.log(error)
 
             return res.status(500).json({
-                message: 'Internal server error (wipeProfile)'
+                message: 'Internal server error (wipe)',
             })
         }
 
         return res.status(200).json({
-            message: 'Profile wiped!'
+            message: 'Profiles wiped!',
+            wipedProfiles
         })
     }
 
@@ -161,26 +193,28 @@ class Stats {
                             continue;
                         }
 
-                        const getLevel = (e) => { return Math.ceil((1 + Math.sqrt(1 + (4*e)/100 - 4)) / 2) }
+                        const getLevel = (e) => { return Math.ceil((1 + Math.sqrt(1 + (4 * e) / 100 - 4)) / 2) }
                         const getNeededExperience = (level) => { return 100 * level * level - 100 * level + 100 }
 
-                        const result = await stats.updateOne({ eosID: player }, { $set: {
-                            playerKills: userStats.playerKills + players[player]['Score']['Kills'],
-                            playerDeaths: userStats.playerDeaths + players[player]['Score']['Deaths'],
-                            playerTeamKills: userStats.playerTeamKills + players[player]['Score']['TeamKills'],
-                            playerVehicleKills: userStats.playerVehicleKills + players[player]['Score']['VehicleKills'],
-                            playerWounds: userStats.playerWounds + players[player]['Score']['Wounds'],
-                            playerWoundeds: userStats.playerWoundeds + players[player]['Score']['Woundeds'],
-                            playerRevivePoints: userStats.playerRevivePoints + players[player]['Score']['RevivePoints'],
-                            playerHealScore: userStats.playerHealScore + players[player]['Score']['HealScore'],
-                            playerTeamWorkScore: userStats.playerTeamWorkScore + players[player]['Score']['TeamWorkScore'],
-                            playerObjectiveScore: userStats.playerObjectiveScore + players[player]['Score']['ObjectiveScore'],
-                            playerCombatScore: userStats.playerCombatScore + players[player]['Score']['CombatScore'],
-                            playerLevel: getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3),
-                            playerName: players[player]['Data']['UserName'],
-                            playerExperience: userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3,
-                            playerNeededExperience: getNeededExperience(getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3))
-                        } })
+                        const result = await stats.updateOne({ eosID: player }, {
+                            $set: {
+                                playerKills: userStats.playerKills + players[player]['Score']['Kills'],
+                                playerDeaths: userStats.playerDeaths + players[player]['Score']['Deaths'],
+                                playerTeamKills: userStats.playerTeamKills + players[player]['Score']['TeamKills'],
+                                playerVehicleKills: userStats.playerVehicleKills + players[player]['Score']['VehicleKills'],
+                                playerWounds: userStats.playerWounds + players[player]['Score']['Wounds'],
+                                playerWoundeds: userStats.playerWoundeds + players[player]['Score']['Woundeds'],
+                                playerRevivePoints: userStats.playerRevivePoints + players[player]['Score']['RevivePoints'],
+                                playerHealScore: userStats.playerHealScore + players[player]['Score']['HealScore'],
+                                playerTeamWorkScore: userStats.playerTeamWorkScore + players[player]['Score']['TeamWorkScore'],
+                                playerObjectiveScore: userStats.playerObjectiveScore + players[player]['Score']['ObjectiveScore'],
+                                playerCombatScore: userStats.playerCombatScore + players[player]['Score']['CombatScore'],
+                                playerLevel: getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3),
+                                playerName: players[player]['Data']['UserName'],
+                                playerExperience: userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3,
+                                playerNeededExperience: getNeededExperience(getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3))
+                            }
+                        })
 
                         updatedProfiles++
                     }

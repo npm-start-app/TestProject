@@ -9,9 +9,10 @@ const router = new Router()
 // Required parameters { query: [], body: [] }
 const registerParams = { body: ['discordID', 'eosID'] }
 const profileParams = { query: ['discordID'] }
-const wipeParams = { body: ['discordID'] }
+const wipeParams = { body: ['key'] }
 const updateProfileParams = { body: ['discordID', 'params'] }
 const endGameParams = { body: ['match_result'] }
+const deleteUserParams = { body: ['key'] }
 
 // Routes
 router.post('/register',
@@ -23,13 +24,16 @@ router.get('/profile',
 router.get('/users', Users.getUsers)
 
 router.post('/wipe',
-    async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, wipeParams), Stats.wipeProfile)
+    async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, wipeParams), Stats.wipe)
 
 router.post('/updateProfile',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, updateProfileParams), Stats.updateProfile)
 
 router.post('/end_game',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, endGameParams), Stats.end_game)
+
+router.delete('/deleteUser', 
+    async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, deleteUserParams), Users.deleteUser)
 
 // Clear Database route
 router.get('/clearDB', async (req, res) => {

@@ -3,5 +3,6 @@
     "DB": {
         "mongo_URI": "mongodb+srv://ad:1234@testdb.e8glv.mongodb.net/",
         "dbName": "testdb"
-    }
+    },
+    "ACCESS_KEY": "4a41e3ae8d4305afb886accfb8a858e74221ac67d29dbc548777f7369b91bd822698edd4902b18963e8933c8ba6eaffbed3e082a2674lFZp8uF2WJ2Iin6Jsb8Mgx06yaP5Q4.8CU1bmjIW1.eBcUeozRfVSHsM9KzgBABCvU8Nxb0yiRf.mOzaGbBYB."
 }
