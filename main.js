@@ -26,6 +26,7 @@ const port = 1111
 server.use(cors())
 server.use(json())
 server.use(urlencoded({ extended: true }));
+server.disable("x-powered-by");
 
 // Routes
 server.use('/', mainRouter)
