@@ -1,6 +1,8 @@
 import Database from '../db.js'
+import StatsScheme from '../Schemes/stats.js';
 
 const isNumeric = (string) => { return /^\d+$/.test(string); }
+const isNumber = (string) => { return /^-?\d+(\.\d+)?$/.test(string); }
 
 class Stats {
     static async getProfile(req, res) {
@@ -80,6 +82,14 @@ class Stats {
             // Update the user stats
             for (const key in req.body.params) {
                 if (userStats.hasOwnProperty(key)) {
+                    if (typeof req.body.params[key] !== StatsScheme.getType(key)) {
+                        if (StatsScheme.getType(key) === 'number' && isNumber(req.body.params[key])) {
+                            req.body.params[key] = Number(req.body.params[key])
+                        } else {
+                            continue;
+                        }
+                    }
+
                     const result = await stats.updateOne({ eosID: user.eosID }, { $set: { [key]: req.body.params[key] } });
                     if (result.matchedCount !== 0) {
                         updatedParams.push(key);
@@ -166,6 +176,7 @@ class Stats {
 
             const stats = await Database.getDB().collection('Stats');
 
+            // Json parsing
             for (const team in match_result['teams']) {
                 const teams = match_result['teams']
 
@@ -180,30 +191,59 @@ class Stats {
                             continue;
                         }
 
-                        const getLevel = (e) => { return Math.ceil((1 + Math.sqrt(1 + (4 * e) / 100 - 4)) / 2) }
-                        const getNeededExperience = (level) => { return 100 * level * level - 100 * level + 100 }
+                        // Check parameters` existance
+                        if (!players[player]['Score']['Kills'] || !players[player]['Score']['Deaths'] || !players[player]['Score']['TeamKills'] || !players[player]['Score']['VehicleKills'] || !players[player]['Score']['Wounds'] || !players[player]['Score']['Woundeds'] || !players[player]['Score']['RevivePoints'] || !players[player]['Score']['HealScore'] || !players[player]['Score']['TeamWorkScore'] || !players[player]['Score']['ObjectiveScore'] || !players[player]['Score']['CombatScore'] || !players[player]['Data']['UserName']) {
+                            return res.status(400).json({
+                                message: 'Invalid player stats! (0)' 
+                            })
+                        }
+
+                        // Check parameters` type
+                        if (!isNumber(players[player]['Score']['Kills']) || !isNumber(players[player]['Score']['Deaths']) || !isNumber(players[player]['Score']['TeamKills']) || !isNumber(players[player]['Score']['VehicleKills']) || !isNumber(players[player]['Score']['Wounds']) || !isNumber(players[player]['Score']['Woundeds']) || !isNumber(players[player]['Score']['RevivePoints']) || !isNumber(players[player]['Score']['HealScore']) || !isNumber(players[player]['Score']['TeamWorkScore']) || !isNumber(players[player]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['CombatScore'])) {
+                            return res.status(400).json({
+                                message: 'Invalid player stats! (1)'
+                            })
+                        }
+                        if (typeof players[player]['Data']['UserName'] !== 'string') {
+                            return res.status(400).json({
+                                message: 'Invalid player stats! (2)'
+                            })
+                        }
+
+                        // Calculate the player level by formula
+                        //          - a(n) = a(n-1) + d * (n-1), where d > 0, n > 0 | n - integer, a(1) = 100
+                        const getLevel = (e, d) => { return Math.ceil((1 + Math.sqrt(1 + 8 * (e - 100) / d)) / 2) }
+                        const getNeededExperience = (level, d) => { return 100 + d * (level - 1) * level / 2 }
+                        const d = 50
+                        const a1 = 100
+                        const playerExperience = userStats.playerExperience + (Number(players[player]['Score']['TeamWorkScore']) + Number(players[player]['Score']['ObjectiveScore']) + Number(players[player]['Score']['CombatScore']) + Number(players[player]['Score']['HealScore'])) / 100
 
                         const result = await stats.updateOne({ eosID: player }, {
                             $set: {
-                                playerKills: userStats.playerKills + players[player]['Score']['Kills'],
-                                playerDeaths: userStats.playerDeaths + players[player]['Score']['Deaths'],
-                                playerTeamKills: userStats.playerTeamKills + players[player]['Score']['TeamKills'],
-                                playerVehicleKills: userStats.playerVehicleKills + players[player]['Score']['VehicleKills'],
-                                playerWounds: userStats.playerWounds + players[player]['Score']['Wounds'],
-                                playerWoundeds: userStats.playerWoundeds + players[player]['Score']['Woundeds'],
-                                playerRevivePoints: userStats.playerRevivePoints + players[player]['Score']['RevivePoints'],
-                                playerHealScore: userStats.playerHealScore + players[player]['Score']['HealScore'],
-                                playerTeamWorkScore: userStats.playerTeamWorkScore + players[player]['Score']['TeamWorkScore'],
-                                playerObjectiveScore: userStats.playerObjectiveScore + players[player]['Score']['ObjectiveScore'],
-                                playerCombatScore: userStats.playerCombatScore + players[player]['Score']['CombatScore'],
-                                playerLevel: getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3),
+                                playerKills: userStats.playerKills + Number(players[player]['Score']['Kills']),
+                                playerDeaths: userStats.playerDeaths + Number(players[player]['Score']['Deaths']),
+                                playerTeamKills: userStats.playerTeamKills + Number(players[player]['Score']['TeamKills']),
+                                playerVehicleKills: userStats.playerVehicleKills + Number(players[player]['Score']['VehicleKills']),
+                                playerWounds: userStats.playerWounds + Number(players[player]['Score']['Wounds']),
+                                playerWoundeds: userStats.playerWoundeds + Number(players[player]['Score']['Woundeds']),
+                                playerRevivePoints: userStats.playerRevivePoints + Number(players[player]['Score']['RevivePoints']),
+                                playerHealScore: userStats.playerHealScore + Number(players[player]['Score']['HealScore']),
+                                playerTeamWorkScore: userStats.playerTeamWorkScore + Number(players[player]['Score']['TeamWorkScore']),
+                                playerObjectiveScore: userStats.playerObjectiveScore + Number(players[player]['Score']['ObjectiveScore']),
+                                playerCombatScore: userStats.playerCombatScore + Number(players[player]['Score']['CombatScore']),
+                                playerLevel: (playerExperience < a1) ? 1
+                                    : (getNeededExperience(getLevel(playerExperience, d), d) === playerExperience) ? getLevel(playerExperience, d) + 1 : getLevel(playerExperience, d),
                                 playerName: players[player]['Data']['UserName'],
-                                playerExperience: userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3,
-                                playerNeededExperience: getNeededExperience(getLevel(userStats.playerExperience + (players[player]['Score']['TeamWorkScore'] + players[player]['Score']['ObjectiveScore'] + players[player]['Score']['CombatScore']) / 3))
+                                playerExperience: playerExperience,
+                                playerNeededExperience: getNeededExperience(
+                                    (playerExperience < a1) ? 1
+                                        : (getNeededExperience(getLevel(playerExperience, d), d) === playerExperience) ? getLevel(playerExperience, d) + 1 : getLevel(playerExperience, d),
+                                    d)
                             }
                         })
-
-                        updatedProfiles++
+                        if (result.matchedCount !== 0) {
+                            updatedProfiles++
+                        }
                     }
                 }
             }

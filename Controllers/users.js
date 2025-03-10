@@ -124,6 +124,12 @@ class Users {
                     }
                 }
             } else {
+                if (!(typeof req.body.eosID === 'string')) {
+                    return res.status(400).json({
+                        message: 'Invalid discordID or eosID!'
+                    })
+                }
+
                 const result = await users.deleteOne({ eosID: req.body.eosID });
                 if (result.deletedCount === 0) {
                     return res.status(400).json({

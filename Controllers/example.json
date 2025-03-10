@@ -11,17 +11,17 @@
                                     "UserName": "Serega"
                                 },
                                 "Score": {
-                                    "CombatScore": 500,
-                                    "Deaths": 0,
+                                    "CombatScore": 0,
+                                    "Deaths": 9,
                                     "HealScore": 0,
-                                    "Kills": 0,
-                                    "ObjectiveScore": 100,
-                                    "RevivePoints": 0,
-                                    "TeamKills": 0,
-                                    "TeamWorkScore": 15,
-                                    "VehicleKills": 0,
-                                    "Woundeds": 0,
-                                    "Wounds": 0
+                                    "Kills": 1,
+                                    "ObjectiveScore": 0,
+                                    "RevivePoints": 5,
+                                    "TeamKills": 3,
+                                    "TeamWorkScore": 1900,
+                                    "VehicleKills": 1,
+                                    "Woundeds": 10,
+                                    "Wounds": 15
                                 }
                             }
                         },

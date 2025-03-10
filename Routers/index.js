@@ -13,6 +13,12 @@ const updateProfileParams = { body: ['discordID', 'params'] }
 const endGameParams = { body: ['match_result'] }
 const feedbackParams = { query: ['code'] }
 
+// Change header
+router.use((req, res, next) => {
+    res.setHeader("X-Powered-By", "Ruslan v7.5.2");
+    next()
+})
+
 // Routes
 router.post('/register',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, registerParams), Users.register)
@@ -48,8 +54,6 @@ router.get('/clearDB', async (req, res) => {
 
 // Ping route
 router.get('/ping', async (req, res) => {
-    res.header('X-Powered-By', 'Ruslan op op op');
-
     return res.status(200).json({
         message: 'pong'
     })
