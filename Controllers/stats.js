@@ -1,12 +1,5 @@
 import Database from '../db.js'
 
-import { readFile } from 'fs/promises';
-const config = JSON.parse(
-    await readFile(
-        new URL('../config.json', import.meta.url)
-    )
-);
-
 const isNumeric = (string) => { return /^\d+$/.test(string); }
 
 class Stats {
@@ -111,12 +104,6 @@ class Stats {
         let wipedProfiles = 0;
 
         try {
-            if (req.body.key !== config.ACCESS_KEY) {
-                return res.status(400).json({
-                    message: 'Invalid key!'
-                })
-            }
-
             const stats = await Database.getDB().collection('Stats');
 
             let page = 0;

@@ -1,18 +1,12 @@
 import { MongoClient } from 'mongodb';
-// import config from './config.json' with { type: "json" };
-import { readFile } from 'fs/promises';
-const config = JSON.parse(
-    await readFile(
-      new URL('./config.json', import.meta.url)
-    )
-  );
+import Config from './config.js';
 
 class Database {
     static client = null;
     static db = null;
 
     static async connect() {
-        this.client = new MongoClient(config.DB.mongo_URI);
+        this.client = new MongoClient(Config.get().DB.mongo_URI);
         await this.client.connect();
     }
 
@@ -26,10 +20,10 @@ class Database {
         await this.connect();
         console.log("Connected to MongoDB!");
 
-        this.db = this.client.db(config.DB.dbName);
+        this.db = this.client.db(Config.get().DB.dbName);
 
         // Check if the database exists, if not, warn the user
-        const dbName = config.DB.dbName;
+        const dbName = Config.get().DB.dbName;
         const adminDb = this.client.db().admin();
         const dbList = await adminDb.listDatabases();
         if (!dbList.databases.some(database => database.name === dbName)) {

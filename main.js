@@ -1,7 +1,7 @@
 import express, { json, urlencoded } from 'express';
 import cors from 'cors';
 import mainRouter from './Routers/index.js';
-// import config from './config.json' with { type: "json" };
+import Config from './config.js';
 import Database from './db.js';
 
 // Start MongoDB
@@ -10,12 +10,12 @@ await Database.ini();
 
 // Close MongoDB connection when the process exits
 process.on('SIGINT', async () => {
-    console.log("Closing MongoDB connection...");
-    await Database.close();
-    process.exit(0);
+  console.log("Closing MongoDB connection...");
+  await Database.close();
+  process.exit(0);
 })
 process.on('exit', async (code) => {
-    console.log("\nServer exited with code: " + code);
+  console.log("\nServer exited with code: " + code);
 })
 
 // Start Express
@@ -26,7 +26,22 @@ const port = 1111
 server.use(cors())
 server.use(json())
 server.use(urlencoded({ extended: true }));
-server.disable("X-Powered-By");
+
+server.use(async (req, res, next) => { // Check for the access key
+  if (!req.headers['key']) {
+    return res.status(401).json({
+      message: 'Unauthorized request!'
+    })
+  }
+
+  if (req.headers['key'] !== Config.get().ACCESS_KEY) {
+    return res.status(401).json({
+      message: 'Unauthorized request!'
+    })
+  }
+
+  next()
+})
 
 // Routes
 server.use('/', mainRouter)
