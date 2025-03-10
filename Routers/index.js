@@ -60,7 +60,7 @@ router.get('/feedback',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, feedbackParams),
     async (req, res) => {
         try {
-            return res.status(parseInt(req.query.code)).json({
+            return res.status((parseInt(req.query.code) >= 200 && parseInt(req.query.code) <= 511) ? parseInt(req.query.code) : 200).json({
                 message: (parseInt(req.query.code) >= 500) ? 'Server error responses' : (parseInt(req.query.code) >= 400) ? 'Client error responses' : (parseInt(req.query.code) >= 300) ? 'Redirection messages' : (parseInt(req.query.code) >= 200) ? 'Success messages' : 'Informational messages'
             })
         } catch (error) {
