@@ -192,7 +192,7 @@ class Stats {
                         }
 
                         // Check parameters` existance
-                        if (!players[player]['Score']['Kills'] || !players[player]['Score']['Deaths'] || !players[player]['Score']['TeamKills'] || !players[player]['Score']['VehicleKills'] || !players[player]['Score']['Wounds'] || !players[player]['Score']['Woundeds'] || !players[player]['Score']['RevivePoints'] || !players[player]['Score']['HealScore'] || !players[player]['Score']['TeamWorkScore'] || !players[player]['Score']['ObjectiveScore'] || !players[player]['Score']['CombatScore'] || !players[player]['Data']['UserName']) {
+                        if (players[player]['Score']['Kills'] === undefined || players[player]['Score']['Deaths'] === undefined || players[player]['Score']['TeamKills'] === undefined || players[player]['Score']['VehicleKills'] === undefined || players[player]['Score']['Wounds'] === undefined || players[player]['Score']['Woundeds'] === undefined || players[player]['Score']['RevivePoints'] === undefined || players[player]['Score']['HealScore'] === undefined || players[player]['Score']['TeamWorkScore'] === undefined || players[player]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['CombatScore'] === undefined || players[player]['Data']['UserName'] === undefined) {
                             return res.status(400).json({
                                 message: 'Invalid player stats! (0)' 
                             })
