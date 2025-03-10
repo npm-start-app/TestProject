@@ -29,12 +29,16 @@ server.use(urlencoded({ extended: true }));
 
 server.use(async (req, res, next) => { // Check for the access key
   if (!req.headers['key']) {
+    res.setHeader("X-Powered-By", "Ruslan v7.5.2");
+
     return res.status(401).json({
       message: 'Unauthorized request!'
     })
   }
 
   if (req.headers['key'] !== Config.get().ACCESS_KEY) {
+    res.setHeader("X-Powered-By", "Ruslan v7.5.2");
+
     return res.status(401).json({
       message: 'Unauthorized request!'
     })
