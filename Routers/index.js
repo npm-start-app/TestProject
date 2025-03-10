@@ -11,6 +11,7 @@ const registerParams = { body: ['discordID', 'eosID'] }
 const profileParams = { query: ['discordID'] }
 const updateProfileParams = { body: ['discordID', 'params'] }
 const endGameParams = { body: ['match_result'] }
+const feedbackParams = { query: ['code'] }
 
 // Routes
 router.post('/register',
@@ -51,6 +52,30 @@ router.get('/ping', async (req, res) => {
 
     return res.status(200).json({
         message: 'pong'
+    })
+})
+
+// feedback route
+router.get('/feedback',
+    async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, feedbackParams),
+    async (req, res) => {
+        try {
+            return res.status(parseInt(req.query.code)).json({
+                message: (parseInt(req.query.code) >= 500) ? 'Server error responses' : (parseInt(req.query.code) >= 400) ? 'Client error responses' : (parseInt(req.query.code) >= 300) ? 'Redirection messages' : (parseInt(req.query.code) >= 200) ? 'Success messages' : 'Informational messages'
+            })
+        } catch (error) {
+            console.log(error)
+
+            return res.status(500).json({
+                message: 'Internal server error (feedback)'
+            })
+        }
+    })
+
+// 404 route
+router.use((req, res) => {
+    return res.status(404).json({
+        message: `[${req.method}] ${req.url} not found!`
     })
 })
 
