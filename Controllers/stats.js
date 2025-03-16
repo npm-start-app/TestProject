@@ -249,7 +249,7 @@ class Stats {
                                 playerSquadLeaderScore: userStats.playerSquadLeaderScore + (Number(squads[squad]['Score']['CombatScore']) + Number(squads[squad]['Score']['ObjectiveScore']) + Number(squads[squad]['Score']['TeamWorkScore'])) / 500,
                                 playerDefeats: (match_result['win_team'] === team) ? userStats.playerDefeats : userStats.playerDefeats + 1,
                                 playerMatches: userStats.playerMatches + 1,
-                                playerWins: (match_result['win_team'] === team) ? userStats.playerWins + 1 : userStats.playerWins
+                                playerWins: (match_result['win_team'] === team) ? userStats.playerDefeats + 1 : userStats.playerDefeats
                             }
                         })
                         if (result.matchedCount !== 0) {
