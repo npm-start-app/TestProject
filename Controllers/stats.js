@@ -145,7 +145,8 @@ class Stats {
                             playerNeededExperience: 100,
                             playerWins: 0,
                             playerDefeats: 0,
-                            playerMatches: 0
+                            playerMatches: 0,
+                            playerSquadLeaderScore: 0
                         }
                     })
 
@@ -174,6 +175,12 @@ class Stats {
         try {
             const match_result = req.body['match_result'];
 
+            if (match_result['win_team'] === undefined) {
+                return res.status(400).json({
+                    message: 'Invalid player stats! (-1)'
+                })
+            }
+
             const stats = await Database.getDB().collection('Stats');
 
             // Json parsing
@@ -192,14 +199,14 @@ class Stats {
                         }
 
                         // Check parameters` existance
-                        if (players[player]['Score']['Kills'] === undefined || players[player]['Score']['Deaths'] === undefined || players[player]['Score']['TeamKills'] === undefined || players[player]['Score']['VehicleKills'] === undefined || players[player]['Score']['Wounds'] === undefined || players[player]['Score']['Woundeds'] === undefined || players[player]['Score']['RevivePoints'] === undefined || players[player]['Score']['HealScore'] === undefined || players[player]['Score']['TeamWorkScore'] === undefined || players[player]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['CombatScore'] === undefined || players[player]['Data']['UserName'] === undefined) {
+                        if (players[player]['Score']['Kills'] === undefined || players[player]['Score']['Deaths'] === undefined || players[player]['Score']['TeamKills'] === undefined || players[player]['Score']['VehicleKills'] === undefined || players[player]['Score']['Wounds'] === undefined || players[player]['Score']['Woundeds'] === undefined || players[player]['Score']['RevivePoints'] === undefined || players[player]['Score']['HealScore'] === undefined || players[player]['Score']['TeamWorkScore'] === undefined || players[player]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['CombatScore'] === undefined || players[player]['Data']['UserName'] === undefined || squads[squad]['Score']['CombatScore'] === undefined || squads[squad]['Score']['TeamWorkScore'] === undefined || squads[squad]['Score']['ObjectiveScore'] === undefined) {
                             return res.status(400).json({
-                                message: 'Invalid player stats! (0)' 
+                                message: 'Invalid player stats! (0)'
                             })
                         }
 
                         // Check parameters` type
-                        if (!isNumber(players[player]['Score']['Kills']) || !isNumber(players[player]['Score']['Deaths']) || !isNumber(players[player]['Score']['TeamKills']) || !isNumber(players[player]['Score']['VehicleKills']) || !isNumber(players[player]['Score']['Wounds']) || !isNumber(players[player]['Score']['Woundeds']) || !isNumber(players[player]['Score']['RevivePoints']) || !isNumber(players[player]['Score']['HealScore']) || !isNumber(players[player]['Score']['TeamWorkScore']) || !isNumber(players[player]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['CombatScore'])) {
+                        if (!isNumber(players[player]['Score']['Kills']) || !isNumber(players[player]['Score']['Deaths']) || !isNumber(players[player]['Score']['TeamKills']) || !isNumber(players[player]['Score']['VehicleKills']) || !isNumber(players[player]['Score']['Wounds']) || !isNumber(players[player]['Score']['Woundeds']) || !isNumber(players[player]['Score']['RevivePoints']) || !isNumber(players[player]['Score']['HealScore']) || !isNumber(players[player]['Score']['TeamWorkScore']) || !isNumber(players[player]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['TeamWorkScore']) || !isNumber(squads[squad]['Score']['ObjectiveScore'])) {
                             return res.status(400).json({
                                 message: 'Invalid player stats! (1)'
                             })
@@ -238,7 +245,11 @@ class Stats {
                                 playerNeededExperience: getNeededExperience(
                                     (playerExperience < a1) ? 1
                                         : (getNeededExperience(getLevel(playerExperience, d), d) === playerExperience) ? getLevel(playerExperience, d) + 1 : getLevel(playerExperience, d),
-                                    d)
+                                    d),
+                                playerSquadLeaderScore: userStats.playerSquadLeaderScore + (Number(squads[squad]['Score']['CombatScore']) + Number(squads[squad]['Score']['ObjectiveScore']) + Number(squads[squad]['Score']['TeamWorkScore'])) / 500,
+                                playerDefeats: (match_result['win_team'] === team) ? userStats.playerDefeats : userStats.playerDefeats + 1,
+                                playerMatches: userStats.playerMatches + 1,
+                                playerWins: (match_result['win_team'] === team) ? userStats.playerDefeats + 1 : userStats.playerDefeats
                             }
                         })
                         if (result.matchedCount !== 0) {

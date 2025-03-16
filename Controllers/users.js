@@ -56,7 +56,8 @@ class Users {
                 playerNeededExperience: 100,
                 playerWins: 0,
                 playerDefeats: 0,
-                playerMatches: 0
+                playerMatches: 0,
+                playerSquadLeaderScore: 0
             })
         } catch (error) {
             console.log(error)
@@ -111,6 +112,13 @@ class Users {
                         })
                     }
 
+                    const user = await users.findOne({ discordID: parseInt(req.body.discordID) })
+                    if (!user) {
+                        return res.status(400).json({
+                            message: 'User not found!'
+                        })
+                    }
+
                     const result = await users.deleteOne({ discordID: parseInt(req.body.discordID) });
                     if (result.deletedCount === 0) {
                         return res.status(400).json({
@@ -118,10 +126,10 @@ class Users {
                         })
                     }
 
-                    const result_0 = await stats.deleteOne({ eosID: result.eosID });
-                    if (result_0.deletedCount === 0) {
-                        await users.deleteOne({ discordID: parseInt(req.body.discordID) })
-                    }
+                    const result_0 = await stats.deleteOne({ eosID: user.eosID });
+                    // if (result_0.deletedCount === 0) {
+                    //     await users.deleteOne({ discordID: parseInt(req.body.discordID) })
+                    // }
                 }
             } else {
                 if (!(typeof req.body.eosID === 'string')) {
@@ -138,9 +146,9 @@ class Users {
                 }
 
                 const result_0 = await stats.deleteOne({ eosID: req.body.eosID });
-                if (result_0.deletedCount === 0) {
-                    await users.deleteOne({ eosID: req.body.eosID })
-                }
+                // if (result_0.deletedCount === 0) {
+                //     await users.deleteOne({ eosID: req.body.eosID })
+                // }
             }
         } catch (error) {
             return res.status(500).json({

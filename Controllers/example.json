@@ -1,9 +1,13 @@
 {
     "match_result": {
+        "win_team": "1",
         "teams": {
             "1": {
                 "Squads": {
                     "1": {
+                        "Leader": {
+                            "id": "0002372f847f44a78914329476242117"
+                        },
                         "Players": {
                             "0002372f847f44a78914329476242117": {
                                 "Data": {
@@ -26,10 +30,10 @@
                             }
                         },
                         "Score": {
-                            "CombatScore": 0,
-                            "ObjectiveScore": 0,
-                            "Score": 0,
-                            "TeamWorkScore": 0
+                            "CombatScore": 500,
+                            "ObjectiveScore": 500,
+                            "Score": 10,
+                            "TeamWorkScore": 500
                         }
                     }
                 }

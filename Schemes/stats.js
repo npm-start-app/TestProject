@@ -19,7 +19,8 @@ class StatsScheme {
         playerNeededExperience: 'number',
         playerWins: 'number',
         playerDefeats: 'number',
-        playerMatches: 'number'
+        playerMatches: 'number',
+        playerSquadLeaderScore: 'number'
     }
 
     static getType(key) {
