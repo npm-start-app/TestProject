@@ -114,6 +114,52 @@ class Stats {
         let wipedProfiles = 0;
 
         try {
+            // Check if stats has been requested, if has not, warn user
+
+            const dbConfig = await Database.getDB().collection('Config');
+            const wipe = await dbConfig.findOne({ name: 'Wipe' })
+            if (!wipe.wasStatsRequested) {
+                const createWarning = async () => {
+                    await dbConfig.updateOne({ name: 'Wipe' }, {
+                        $set: {
+                            wasWarned: true,
+                            timeOfGivenWarning: Date.now()
+                        }
+                    })
+                }
+
+                if (!wipe.wasWarned) {
+                    await createWarning()
+
+                    return res.status(409).json({
+                        message: 'Stats has not been requested, to do wipe, add body param "wipe: true"',
+                    })
+                } else {
+                    if (!req.body.wipe || req.body.wipe !== 'true') {
+                        return res.status(409).json({
+                            message: 'Needs body param "wipe: true" to wipe',
+                        })
+                    }
+
+                    if (Date.now() - wipe.timeOfGivenWarning > 1 * 60 * 3600 * 1000) {
+                        await createWarning()
+
+                        return res.status(409).json({
+                            message: 'Wipe request was time out (1 hour), to do wipe, add body param "wipe: true"',
+                        })
+                    }
+                }
+            }
+            await dbConfig.updateOne({ name: 'Wipe' }, {
+                $set: {
+                    wasWarned: false,
+                    wasStatsRequested: false,
+                    timeOfGivenWarning: null
+                }
+            })
+
+            // Do wipe
+
             const stats = await Database.getDB().collection('Stats');
 
             let page = 0;
@@ -146,7 +192,8 @@ class Stats {
                             playerWins: 0,
                             playerDefeats: 0,
                             playerMatches: 0,
-                            playerSquadLeaderScore: 0
+                            playerSquadLeaderScore: 0,
+                            playerDamage: 0
                         }
                     })
 
@@ -199,14 +246,14 @@ class Stats {
                         }
 
                         // Check parameters` existance
-                        if (players[player]['Score']['Kills'] === undefined || players[player]['Score']['Deaths'] === undefined || players[player]['Score']['TeamKills'] === undefined || players[player]['Score']['VehicleKills'] === undefined || players[player]['Score']['Wounds'] === undefined || players[player]['Score']['Woundeds'] === undefined || players[player]['Score']['RevivePoints'] === undefined || players[player]['Score']['HealScore'] === undefined || players[player]['Score']['TeamWorkScore'] === undefined || players[player]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['CombatScore'] === undefined || players[player]['Data']['UserName'] === undefined || squads[squad]['Score']['CombatScore'] === undefined || squads[squad]['Score']['TeamWorkScore'] === undefined || squads[squad]['Score']['ObjectiveScore'] === undefined) {
+                        if (players[player]['Score']['Kills'] === undefined || players[player]['Score']['Deaths'] === undefined || players[player]['Score']['TeamKills'] === undefined || players[player]['Score']['VehicleKills'] === undefined || players[player]['Score']['Wounds'] === undefined || players[player]['Score']['Woundeds'] === undefined || players[player]['Score']['RevivePoints'] === undefined || players[player]['Score']['HealScore'] === undefined || players[player]['Score']['TeamWorkScore'] === undefined || players[player]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['CombatScore'] === undefined || players[player]['Data']['UserName'] === undefined || squads[squad]['Score']['CombatScore'] === undefined || squads[squad]['Score']['TeamWorkScore'] === undefined || squads[squad]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['Damage'] === undefined) {
                             return res.status(400).json({
                                 message: 'Invalid player stats! (0)'
                             })
                         }
 
                         // Check parameters` type
-                        if (!isNumber(players[player]['Score']['Kills']) || !isNumber(players[player]['Score']['Deaths']) || !isNumber(players[player]['Score']['TeamKills']) || !isNumber(players[player]['Score']['VehicleKills']) || !isNumber(players[player]['Score']['Wounds']) || !isNumber(players[player]['Score']['Woundeds']) || !isNumber(players[player]['Score']['RevivePoints']) || !isNumber(players[player]['Score']['HealScore']) || !isNumber(players[player]['Score']['TeamWorkScore']) || !isNumber(players[player]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['TeamWorkScore']) || !isNumber(squads[squad]['Score']['ObjectiveScore'])) {
+                        if (!isNumber(players[player]['Score']['Kills']) || !isNumber(players[player]['Score']['Deaths']) || !isNumber(players[player]['Score']['TeamKills']) || !isNumber(players[player]['Score']['VehicleKills']) || !isNumber(players[player]['Score']['Wounds']) || !isNumber(players[player]['Score']['Woundeds']) || !isNumber(players[player]['Score']['RevivePoints']) || !isNumber(players[player]['Score']['HealScore']) || !isNumber(players[player]['Score']['TeamWorkScore']) || !isNumber(players[player]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['TeamWorkScore']) || !isNumber(squads[squad]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['Damage'])) {
                             return res.status(400).json({
                                 message: 'Invalid player stats! (1)'
                             })
@@ -217,7 +264,7 @@ class Stats {
                             })
                         }
 
-                        // Calculate the player level by formula
+                        // Calculate player level by formula
                         //          - a(n) = a(n-1) + d * (n-1), where d > 0, n > 0 | n - integer, a(1) = 100
                         const getLevel = (e, d) => { return Math.ceil((1 + Math.sqrt(1 + 8 * (e - 100) / d)) / 2) }
                         const getNeededExperience = (level, d) => { return 100 + d * (level - 1) * level / 2 }
@@ -246,10 +293,11 @@ class Stats {
                                     (playerExperience < a1) ? 1
                                         : (getNeededExperience(getLevel(playerExperience, d), d) === playerExperience) ? getLevel(playerExperience, d) + 1 : getLevel(playerExperience, d),
                                     d),
-                                playerSquadLeaderScore: userStats.playerSquadLeaderScore + (Number(squads[squad]['Score']['CombatScore']) + Number(squads[squad]['Score']['ObjectiveScore']) + Number(squads[squad]['Score']['TeamWorkScore'])) / 500,
+                                playerSquadLeaderScore: (squads[squad]['Leader']['id'] === player) ? userStats.playerSquadLeaderScore + (Number(squads[squad]['Score']['CombatScore']) + Number(squads[squad]['Score']['ObjectiveScore']) + Number(squads[squad]['Score']['TeamWorkScore'])) / 500 : userStats.playerSquadLeaderScore,
                                 playerDefeats: (match_result['win_team'] === team) ? userStats.playerDefeats : userStats.playerDefeats + 1,
                                 playerMatches: userStats.playerMatches + 1,
-                                playerWins: (match_result['win_team'] === team) ? userStats.playerWins + 1 : userStats.playerWins
+                                playerWins: (match_result['win_team'] === team) ? userStats.playerWins + 1 : userStats.playerWins,
+                                playerDamage: userStats.playerDamage + Number(players[player]['Score']['Damage'])
                             }
                         })
                         if (result.matchedCount !== 0) {
@@ -269,6 +317,137 @@ class Stats {
         return res.status(200).json({
             message: 'Game ended!',
             updatedProfiles
+        })
+    }
+
+    static async getStats(req, res) {
+        let bestKillers = []
+        let bestMedics = []
+        let bestVehicleKillers = []
+        let bestWinners = []
+        let bestScorePlayers = []
+        let bestDamagers = []
+
+        try {
+            const stats = await Database.getDB().collection('Stats');
+
+            let page = 0;
+            let limit = 20;
+
+            while (true) {
+                const result = await stats.find().skip(limit * page).limit(limit).toArray();
+
+                if (result.length === 0) {
+                    break;
+                }
+
+                // Best Killers
+                const bestKillersNotSorted = [...result, ...bestKillers]
+
+                bestKillers = bestKillersNotSorted
+                    .sort((a, b) => b.playerKills - a.playerKills)
+                    .slice(0, 15);
+
+                // Best Medics
+                const bestMedicsNotSorted = [...result, ...bestMedics]
+
+                bestMedics = bestMedicsNotSorted
+                    .sort((a, b) => b.playerWoundeds - a.playerWoundeds)
+                    .slice(0, 5);
+
+                // Best Vehicle Killers
+                const bestVehicleKillersNotSorted = [...result, ...bestVehicleKillers]
+
+                bestVehicleKillers = bestVehicleKillersNotSorted
+                    .sort((a, b) => b.playerVehicleKills - a.playerVehicleKills)
+                    .slice(0, 5);
+
+                // Best Winners
+                const bestWinnersNotSorted = [...result, ...bestWinners]
+
+                bestWinners = bestWinnersNotSorted
+                    .sort((a, b) => b.playerWins - a.playerWins)
+                    .slice(0, 3);
+
+                // Best Score Players
+                const bestScorePlayersNotSorted = [...result, ...bestScorePlayers]
+
+                bestScorePlayers = bestScorePlayersNotSorted
+                    .sort((a, b) => (b.playerCombatScore + b.playerHealScore + b.playerObjectiveScore + b.playerTeamWorkScore) - (a.playerCombatScore + a.playerHealScore + a.playerObjectiveScore + a.playerTeamWorkScore))
+                    .slice(0, 3);
+
+                // Best Damagers
+                const bestDamagersNotSorted = [...result, ...bestDamagers]
+
+                bestDamagers = bestDamagersNotSorted
+                    .sort((a, b) => b.playerDamage - a.playerDamage)
+                    .slice(0, 3);
+
+                page++
+            }
+
+            // Best Killers
+            for (let i = 0; i < bestKillers.length; i++) {
+                bestKillers[i] = {
+                    name: bestKillers[i].playerName,
+                    value: bestKillers[i].playerKills
+                }
+            }
+
+            // Best Medics
+            for (let i = 0; i < bestMedics.length; i++) {
+                bestMedics[i] = {
+                    name: bestMedics[i].playerName,
+                    value: bestMedics[i].playerWoundeds
+                }
+            }
+
+            // Best Vehicle Killers
+            for (let i = 0; i < bestVehicleKillers.length; i++) {
+                bestVehicleKillers[i] = {
+                    name: bestVehicleKillers[i].playerName,
+                    value: bestVehicleKillers[i].playerVehicleKills
+                }
+            }
+
+            // Best Winners
+            for (let i = 0; i < bestWinners.length; i++) {
+                bestWinners[i] = {
+                    name: bestWinners[i].playerName,
+                    value: bestWinners[i].playerWins
+                }
+            }
+
+            // Best Score Players
+            for (let i = 0; i < bestScorePlayers.length; i++) {
+                bestScorePlayers[i] = {
+                    name: bestScorePlayers[i].playerName,
+                    value: bestScorePlayers[i].playerCombatScore + bestScorePlayers[i].playerHealScore + bestScorePlayers[i].playerObjectiveScore + bestScorePlayers[i].playerTeamWorkScore
+                }
+            }
+
+            // Best Damagers
+            for (let i = 0; i < bestDamagers.length; i++) {
+                bestDamagers[i] = {
+                    name: bestDamagers[i].playerName,
+                    value: bestDamagers[i].playerDamage
+                }
+            }
+        } catch (error) {
+            console.log(error)
+
+            return res.status(500).json({
+                message: 'Internal server error (getStats)'
+            })
+        }
+
+        return res.status(200).json({
+            bestKillers,
+            bestMedics,
+            bestVehicleKillers,
+            bestWinners,
+            bestScorePlayers,
+            bestDamagers
         })
     }
 }

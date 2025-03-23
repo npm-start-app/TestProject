@@ -44,6 +44,20 @@ class Database {
             console.log("Collection 'Stats' created.");
         }
 
+        if (!collectionNames.includes("Config")) {
+            await this.db.createCollection("Config");
+
+            const dbConfig = await this.db.collection('Config')
+            await dbConfig.insertOne({
+                name: "Wipe",
+                wasStatsRequested: false,
+                wasWarned: false,
+                timeOfGivenWarning: null
+            })
+
+            console.log("Collection 'Config' and its dependencies created.");
+        }
+
         console.log("\nDatabase initialized! \n");
     }
 

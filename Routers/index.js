@@ -26,6 +26,8 @@ router.post('/register',
 router.get('/profile',
     async (req, res, next) => await ParamsChecker.checkExistance(req, res, next, profileParams), Stats.getProfile)
 
+router.get('/stats', Stats.getStats)
+
 router.get('/users', Users.getUsers)
 
 router.post('/wipe',
@@ -46,6 +48,15 @@ router.get('/clearDB', async (req, res) => {
 
     await Database.getClient().db('testdb').createCollection("Users");
     await Database.getClient().db('testdb').createCollection("Stats");
+    await Database.getClient().db('testdb').createCollection("Config");
+
+    const dbConfig = await Database.getDB().collection("Config")
+    await dbConfig.insertOne({
+        name: "Wipe",
+        wasStatsRequested: false,
+        wasWarned: false,
+        timeOfGivenWarning: null
+    })
 
     return res.status(200).json({
         message: 'Database cleared!'

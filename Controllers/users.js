@@ -57,7 +57,8 @@ class Users {
                 playerWins: 0,
                 playerDefeats: 0,
                 playerMatches: 0,
-                playerSquadLeaderScore: 0
+                playerSquadLeaderScore: 0,
+                playerDamage: 0
             })
         } catch (error) {
             console.log(error)
@@ -78,10 +79,14 @@ class Users {
         const limit = 20;
         const page = parseInt(req.query.page) || 0;
 
+        let countedUsers = 0
+
         try {
             const users = await Database.getDB().collection('Users');
 
             records = await users.find().skip(limit * page).limit(limit).toArray();
+
+            countedUsers = await users.countDocuments({}, { hint: "_id_" });
         } catch (error) {
             console.log(error)
 
@@ -91,6 +96,7 @@ class Users {
         }
 
         return res.status(200).json({
+            countedUsers,
             records
         })
     }
@@ -151,6 +157,8 @@ class Users {
                 // }
             }
         } catch (error) {
+            console.log(error)
+
             return res.status(500).json({
                 message: 'Internal server error (deleteUser)'
             })

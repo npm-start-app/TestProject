@@ -4,6 +4,12 @@ import mainRouter from './Routers/index.js';
 import Config from './config.js';
 import Database from './db.js';
 
+// Check config file
+process.on('exit', async (code) => {
+  console.log("\nServer exited with code: " + code);
+})
+if (Config.get().PORT === undefined) process.exit(1)
+
 // Start MongoDB
 console.log("Starting Mongo... \n");
 await Database.ini();
@@ -14,13 +20,10 @@ process.on('SIGINT', async () => {
   await Database.close();
   process.exit(0);
 })
-process.on('exit', async (code) => {
-  console.log("\nServer exited with code: " + code);
-})
 
 // Start Express
 const server = express()
-const port = 1111
+const port = Config.get().PORT
 
 // Middlewares
 server.use(cors())

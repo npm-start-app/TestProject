@@ -1,5 +1,5 @@
 {
-    "PORT": 1111,
+    "PORT": 5235,
     "DB": {
         "mongo_URI": "mongodb+srv://ad:1234@testdb.e8glv.mongodb.net/",
         "dbName": "testdb"
