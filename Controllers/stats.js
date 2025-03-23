@@ -135,7 +135,7 @@ class Stats {
                         message: 'Stats has not been requested, to do wipe, add body param "wipe: true"',
                     })
                 } else {
-                    if (!req.body.wipe || req.body.wipe !== 'true') {
+                    if (!req.body.wipe || (req.body.wipe !== 'true' && req.body.wipe !== true)) {
                         return res.status(409).json({
                             message: 'Needs body param "wipe: true" to wipe',
                         })
@@ -330,6 +330,7 @@ class Stats {
 
         try {
             const stats = await Database.getDB().collection('Stats');
+            const dbConfig = await Database.getDB().collection('Config');
 
             let page = 0;
             let limit = 20;
@@ -433,6 +434,12 @@ class Stats {
                     value: bestDamagers[i].playerDamage
                 }
             }
+
+            await dbConfig.updateOne({ name: 'Wipe' }, {
+                $set: {
+                    wasStatsRequested: true,
+                }
+            })
         } catch (error) {
             console.log(error)
 
