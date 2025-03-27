@@ -1,4 +1,5 @@
 import Database from '../db.js'
+import Loger from '../Loger/loger.js';
 
 const isNumeric = (string) => { return /^\d+$/.test(string); }
 
@@ -57,11 +58,12 @@ class Users {
                 playerWins: 0,
                 playerDefeats: 0,
                 playerMatches: 0,
-                playerSquadLeaderScore: 0,
-                playerDamage: 0
+                playerSquadLeaderScore: 0
             })
         } catch (error) {
             console.log(error)
+
+            Loger.logError(error, req, 500)
 
             return res.status(500).json({
                 message: 'Internal server error (register)'
@@ -73,7 +75,7 @@ class Users {
         })
     }
 
-    static async getUsers(req, res) {
+    static async getUsers(req, res, next) {
         let records = [];
 
         const limit = 20;
@@ -89,6 +91,8 @@ class Users {
             countedUsers = await users.countDocuments({}, { hint: "_id_" });
         } catch (error) {
             console.log(error)
+
+            Loger.logError(error, req, 500)
 
             return res.status(500).json({
                 message: 'Internal server error (getUsers)'
@@ -158,6 +162,8 @@ class Users {
             }
         } catch (error) {
             console.log(error)
+
+            Loger.logError(error, req, 500)
 
             return res.status(500).json({
                 message: 'Internal server error (deleteUser)'

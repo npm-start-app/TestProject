@@ -3,12 +3,13 @@ import cors from 'cors';
 import mainRouter from './Routers/index.js';
 import Config from './config.js';
 import Database from './db.js';
+import Loger from './Loger/loger.js';
 
 // Check config file
 process.on('exit', async (code) => {
   console.log("\nServer exited with code: " + code);
 })
-if (Config.get().PORT === undefined) process.exit(1)
+if (Config.get().PORT === undefined) { process.exit(1) }
 
 // Start MongoDB
 console.log("Starting Mongo... \n");
@@ -29,6 +30,7 @@ const port = Config.get().PORT
 server.use(cors())
 server.use(json())
 server.use(urlencoded({ extended: true }));
+server.use(Loger.logRequest)
 
 server.use(async (req, res, next) => { // Check for the access key
   if (!req.headers['key']) {

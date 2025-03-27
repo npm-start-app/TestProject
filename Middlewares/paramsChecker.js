@@ -1,3 +1,5 @@
+import Loger from "../Loger/loger.js"
+
 class ParamsChecker {
     static async checkExistance(req, res, next, params) {
         try {
@@ -17,6 +19,10 @@ class ParamsChecker {
                 }
             }
         } catch (error) {
+            console.log(error)
+
+            Loger.logError(error, req, 500)
+
             return res.status(500).json({
                 message: 'Internal server error (ParamsChecker)'
             })

@@ -1,4 +1,5 @@
 import Database from '../db.js'
+import Loger from '../Loger/loger.js';
 import StatsScheme from '../Schemes/stats.js';
 
 const isNumeric = (string) => { return /^\d+$/.test(string); }
@@ -38,6 +39,8 @@ class Stats {
             delete userStats._id;
         } catch (error) {
             console.log(error)
+
+            Loger.logError(error, req, 500)
 
             return res.status(500).json({
                 message: 'Internal server error (getProfile)'
@@ -98,6 +101,8 @@ class Stats {
             }
         } catch (error) {
             console.log(error)
+            
+            Loger.logError(error, req, 500)
 
             return res.status(500).json({
                 message: 'Internal server error (updateProfile)'
@@ -192,8 +197,7 @@ class Stats {
                             playerWins: 0,
                             playerDefeats: 0,
                             playerMatches: 0,
-                            playerSquadLeaderScore: 0,
-                            playerDamage: 0
+                            playerSquadLeaderScore: 0
                         }
                     })
 
@@ -204,6 +208,8 @@ class Stats {
             }
         } catch (error) {
             console.log(error)
+
+            Loger.logError(error, req, 500)
 
             return res.status(500).json({
                 message: 'Internal server error (wipe)',
@@ -246,14 +252,14 @@ class Stats {
                         }
 
                         // Check parameters` existance
-                        if (players[player]['Score']['Kills'] === undefined || players[player]['Score']['Deaths'] === undefined || players[player]['Score']['TeamKills'] === undefined || players[player]['Score']['VehicleKills'] === undefined || players[player]['Score']['Wounds'] === undefined || players[player]['Score']['Woundeds'] === undefined || players[player]['Score']['RevivePoints'] === undefined || players[player]['Score']['HealScore'] === undefined || players[player]['Score']['TeamWorkScore'] === undefined || players[player]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['CombatScore'] === undefined || players[player]['Data']['UserName'] === undefined || squads[squad]['Score']['CombatScore'] === undefined || squads[squad]['Score']['TeamWorkScore'] === undefined || squads[squad]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['Damage'] === undefined) {
+                        if (players[player]['Score']['Kills'] === undefined || players[player]['Score']['Deaths'] === undefined || players[player]['Score']['TeamKills'] === undefined || players[player]['Score']['VehicleKills'] === undefined || players[player]['Score']['Wounds'] === undefined || players[player]['Score']['Woundeds'] === undefined || players[player]['Score']['RevivePoints'] === undefined || players[player]['Score']['HealScore'] === undefined || players[player]['Score']['TeamWorkScore'] === undefined || players[player]['Score']['ObjectiveScore'] === undefined || players[player]['Score']['CombatScore'] === undefined || players[player]['Data']['UserName'] === undefined || squads[squad]['Score']['CombatScore'] === undefined || squads[squad]['Score']['TeamWorkScore'] === undefined || squads[squad]['Score']['ObjectiveScore'] === undefined) {
                             return res.status(400).json({
                                 message: 'Invalid player stats! (0)'
                             })
                         }
 
                         // Check parameters` type
-                        if (!isNumber(players[player]['Score']['Kills']) || !isNumber(players[player]['Score']['Deaths']) || !isNumber(players[player]['Score']['TeamKills']) || !isNumber(players[player]['Score']['VehicleKills']) || !isNumber(players[player]['Score']['Wounds']) || !isNumber(players[player]['Score']['Woundeds']) || !isNumber(players[player]['Score']['RevivePoints']) || !isNumber(players[player]['Score']['HealScore']) || !isNumber(players[player]['Score']['TeamWorkScore']) || !isNumber(players[player]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['TeamWorkScore']) || !isNumber(squads[squad]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['Damage'])) {
+                        if (!isNumber(players[player]['Score']['Kills']) || !isNumber(players[player]['Score']['Deaths']) || !isNumber(players[player]['Score']['TeamKills']) || !isNumber(players[player]['Score']['VehicleKills']) || !isNumber(players[player]['Score']['Wounds']) || !isNumber(players[player]['Score']['Woundeds']) || !isNumber(players[player]['Score']['RevivePoints']) || !isNumber(players[player]['Score']['HealScore']) || !isNumber(players[player]['Score']['TeamWorkScore']) || !isNumber(players[player]['Score']['ObjectiveScore']) || !isNumber(players[player]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['CombatScore']) || !isNumber(squads[squad]['Score']['TeamWorkScore']) || !isNumber(squads[squad]['Score']['ObjectiveScore'])) {
                             return res.status(400).json({
                                 message: 'Invalid player stats! (1)'
                             })
@@ -296,8 +302,7 @@ class Stats {
                                 playerSquadLeaderScore: (squads[squad]['Leader']['id'] === player) ? userStats.playerSquadLeaderScore + (Number(squads[squad]['Score']['CombatScore']) + Number(squads[squad]['Score']['ObjectiveScore']) + Number(squads[squad]['Score']['TeamWorkScore'])) / 500 : userStats.playerSquadLeaderScore,
                                 playerDefeats: (match_result['win_team'] === team) ? userStats.playerDefeats : userStats.playerDefeats + 1,
                                 playerMatches: userStats.playerMatches + 1,
-                                playerWins: (match_result['win_team'] === team) ? userStats.playerWins + 1 : userStats.playerWins,
-                                playerDamage: userStats.playerDamage + Number(players[player]['Score']['Damage'])
+                                playerWins: (match_result['win_team'] === team) ? userStats.playerWins + 1 : userStats.playerWins
                             }
                         })
                         if (result.matchedCount !== 0) {
@@ -308,6 +313,8 @@ class Stats {
             }
         } catch (error) {
             console.log(error)
+
+            Loger.logError(error, req, 500)
 
             return res.status(500).json({
                 message: 'Internal server error (end_game)'
@@ -321,12 +328,14 @@ class Stats {
     }
 
     static async getStats(req, res) {
-        let bestKillers = []
-        let bestMedics = []
-        let bestVehicleKillers = []
-        let bestWinners = []
-        let bestScorePlayers = []
-        let bestDamagers = []
+        let bestKiller = []
+        let bestDeathMan = []
+        let bestHealer = []
+        let bestVehicleKiller = []
+        let bestTraitor = []
+        let bestLevel = []
+        let bestSquadLeader = []
+        let bestWinner = []
 
         try {
             const stats = await Database.getDB().collection('Stats');
@@ -342,97 +351,63 @@ class Stats {
                     break;
                 }
 
-                // Best Killers
-                const bestKillersNotSorted = [...result, ...bestKillers]
+                // Best Killer
+                const bestKillerNotSorted = [...result, ...bestKiller]
 
-                bestKillers = bestKillersNotSorted
+                bestKiller = bestKillerNotSorted
                     .sort((a, b) => b.playerKills - a.playerKills)
-                    .slice(0, 15);
+                    .slice(0, 1);
 
-                // Best Medics
-                const bestMedicsNotSorted = [...result, ...bestMedics]
+                // Best Death Man
+                const bestDeathManNotSorted = [...result, ...bestDeathMan]
 
-                bestMedics = bestMedicsNotSorted
-                    .sort((a, b) => b.playerWoundeds - a.playerWoundeds)
-                    .slice(0, 5);
+                bestDeathMan = bestDeathManNotSorted
+                    .sort((a, b) => b.playerDeaths - a.playerDeaths)
+                    .slice(0, 1);
 
-                // Best Vehicle Killers
-                const bestVehicleKillersNotSorted = [...result, ...bestVehicleKillers]
+                // Best Healer
+                const bestHealerNotSorted = [...result, ...bestHealer]
 
-                bestVehicleKillers = bestVehicleKillersNotSorted
+                bestHealer = bestHealerNotSorted
+                    .sort((a, b) => b.playerHealScore - a.playerHealScore)
+                    .slice(0, 1);
+
+                // Best Vehicle Killer
+                const bestVehicleKillerNotSorted = [...result, ...bestVehicleKiller]
+
+                bestVehicleKiller = bestVehicleKillerNotSorted
                     .sort((a, b) => b.playerVehicleKills - a.playerVehicleKills)
-                    .slice(0, 5);
+                    .slice(0, 1);
 
-                // Best Winners
-                const bestWinnersNotSorted = [...result, ...bestWinners]
+                // Best Traitor
+                const bestTraitorNotSorted = [...result, ...bestTraitor]
 
-                bestWinners = bestWinnersNotSorted
+                bestTraitor = bestTraitorNotSorted
+                    .sort((a, b) => b.playerTeamKills - a.playerTeamKills)
+                    .slice(0, 1);
+
+                // Best Level
+                const bestLevelNotSorted = [...result, ...bestLevel]
+
+                bestLevel = bestLevelNotSorted
+                    .sort((a, b) => b.playerExperience - a.playerExperience)
+                    .slice(0, 1);
+
+                // Best Squad Leader
+                const bestSquadLeaderNotSorted = [...result, ...bestSquadLeader]
+
+                bestSquadLeader = bestSquadLeaderNotSorted
+                    .sort((a, b) => b.playerSquadLeaderScore - a.playerSquadLeaderScore)
+                    .slice(0, 1);
+
+                // Best Winner
+                const bestWinnerNotSorted = [...result, ...bestWinner]
+
+                bestWinner = bestWinnerNotSorted
                     .sort((a, b) => b.playerWins - a.playerWins)
-                    .slice(0, 3);
-
-                // Best Score Players
-                const bestScorePlayersNotSorted = [...result, ...bestScorePlayers]
-
-                bestScorePlayers = bestScorePlayersNotSorted
-                    .sort((a, b) => (b.playerCombatScore + b.playerHealScore + b.playerObjectiveScore + b.playerTeamWorkScore) - (a.playerCombatScore + a.playerHealScore + a.playerObjectiveScore + a.playerTeamWorkScore))
-                    .slice(0, 3);
-
-                // Best Damagers
-                const bestDamagersNotSorted = [...result, ...bestDamagers]
-
-                bestDamagers = bestDamagersNotSorted
-                    .sort((a, b) => b.playerDamage - a.playerDamage)
-                    .slice(0, 3);
+                    .slice(0, 1);
 
                 page++
-            }
-
-            // Best Killers
-            for (let i = 0; i < bestKillers.length; i++) {
-                bestKillers[i] = {
-                    name: bestKillers[i].playerName,
-                    value: bestKillers[i].playerKills
-                }
-            }
-
-            // Best Medics
-            for (let i = 0; i < bestMedics.length; i++) {
-                bestMedics[i] = {
-                    name: bestMedics[i].playerName,
-                    value: bestMedics[i].playerWoundeds
-                }
-            }
-
-            // Best Vehicle Killers
-            for (let i = 0; i < bestVehicleKillers.length; i++) {
-                bestVehicleKillers[i] = {
-                    name: bestVehicleKillers[i].playerName,
-                    value: bestVehicleKillers[i].playerVehicleKills
-                }
-            }
-
-            // Best Winners
-            for (let i = 0; i < bestWinners.length; i++) {
-                bestWinners[i] = {
-                    name: bestWinners[i].playerName,
-                    value: bestWinners[i].playerWins
-                }
-            }
-
-            // Best Score Players
-            for (let i = 0; i < bestScorePlayers.length; i++) {
-                bestScorePlayers[i] = {
-                    name: bestScorePlayers[i].playerName,
-                    value: bestScorePlayers[i].playerCombatScore + bestScorePlayers[i].playerHealScore + bestScorePlayers[i].playerObjectiveScore + bestScorePlayers[i].playerTeamWorkScore
-                }
-            }
-
-            // Best Damagers
-            for (let i = 0; i < bestDamagers.length; i++) {
-                bestDamagers[i] = {
-                    name: bestDamagers[i].playerName,
-                    value: bestDamagers[i].playerDamage
-                }
             }
 
             await dbConfig.updateOne({ name: 'Wipe' }, {
@@ -443,18 +418,22 @@ class Stats {
         } catch (error) {
             console.log(error)
 
+            Loger.logError(error, req, 500)
+
             return res.status(500).json({
                 message: 'Internal server error (getStats)'
             })
         }
 
         return res.status(200).json({
-            bestKillers,
-            bestMedics,
-            bestVehicleKillers,
-            bestWinners,
-            bestScorePlayers,
-            bestDamagers
+            bestKiller,
+            bestDeathMan,
+            bestHealer,
+            bestVehicleKiller,
+            bestTraitor,
+            bestLevel,
+            bestSquadLeader,
+            bestWinner
         })
     }
 }
