@@ -342,7 +342,7 @@ class Stats {
             const dbConfig = await Database.getDB().collection('Config');
 
             let page = 0;
-            let limit = 20;
+            let limit = 40;
 
             while (true) {
                 const result = await stats.find().skip(limit * page).limit(limit).toArray();
@@ -356,56 +356,56 @@ class Stats {
 
                 bestKiller = bestKillerNotSorted
                     .sort((a, b) => b.playerKills - a.playerKills)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 // Best Death Man
                 const bestDeathManNotSorted = [...result, ...bestDeathMan]
 
                 bestDeathMan = bestDeathManNotSorted
                     .sort((a, b) => b.playerDeaths - a.playerDeaths)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 // Best Healer
                 const bestHealerNotSorted = [...result, ...bestHealer]
 
                 bestHealer = bestHealerNotSorted
                     .sort((a, b) => b.playerHealScore - a.playerHealScore)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 // Best Vehicle Killer
                 const bestVehicleKillerNotSorted = [...result, ...bestVehicleKiller]
 
                 bestVehicleKiller = bestVehicleKillerNotSorted
                     .sort((a, b) => b.playerVehicleKills - a.playerVehicleKills)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 // Best Traitor
                 const bestTraitorNotSorted = [...result, ...bestTraitor]
 
                 bestTraitor = bestTraitorNotSorted
                     .sort((a, b) => b.playerTeamKills - a.playerTeamKills)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 // Best Level
                 const bestLevelNotSorted = [...result, ...bestLevel]
 
                 bestLevel = bestLevelNotSorted
                     .sort((a, b) => b.playerExperience - a.playerExperience)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 // Best Squad Leader
                 const bestSquadLeaderNotSorted = [...result, ...bestSquadLeader]
 
                 bestSquadLeader = bestSquadLeaderNotSorted
                     .sort((a, b) => b.playerSquadLeaderScore - a.playerSquadLeaderScore)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 // Best Winner
                 const bestWinnerNotSorted = [...result, ...bestWinner]
 
                 bestWinner = bestWinnerNotSorted
                     .sort((a, b) => b.playerWins - a.playerWins)
-                    .slice(0, 1);
+                    .slice(0, 30);
 
                 page++
             }
